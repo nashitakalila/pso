@@ -1,0 +1,22 @@
+stages:
+    - build
+    - test
+    - deploy
+
+build_project:
+    stage: build
+    script:
+        - echo "Building the project"
+
+run_tests:
+    stage: test
+    image: python:3.8-slim
+    before_script:
+        - pip install -r requirements.txt
+    script:
+        - python -m pytest
+
+deploy_project:
+    stage: deploy
+    script:
+        - echo "Deploying the project"
