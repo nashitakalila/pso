@@ -33,15 +33,23 @@ jobs:
 
       - name: Wait for Streamlit to be ready
         run: |
-          until curl -s http://localhost:5000 > /dev/null; do
-            echo "Waiting for Streamlit app to be ready..."
-            sleep 5
+          echo "Waiting for Streamlit app to be ready..."
+          sleep 10  # Tunggu 10 detik sebelum melakukan curl pertama
+          count=0
+          until curl -s http://localhost:5000 > /dev/null || [ $count -eq 5 ]; do
+            echo "Still waiting for Streamlit app to be ready..."
+            sleep 10
+            ((count++))
           done
+          if [ $count -eq 5 ]; then
+            echo "Timeout: Streamlit app took too long to start."
+            exit 1
+          fi
           echo "Streamlit app is up and running!"
 
       - name: Run tests
         run: |
-          curl http://localhost:5000  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
+          curl http://localhost:5003  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
 
       - name: Tear down
         run: |
