@@ -1,72 +1,22 @@
-name: Streamlit CI Pipeline
+name: Streamlit app
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
   pull_request:
-    branches:
-      - main
+    branches: ["main"]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  streamlit:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-    
-      - name: Pull Docker Image
-        run: docker pull talithaarr/mlops-ps0:v1
-    
-      - name: Ensure Vendor and Storage Directories Exist
-        run: |
-          mkdir -p vendor storage/logs
-          sudo chown -R $USER:$USER vendor storage
-    
-      - name: Install Composer Dependencies
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/var/www \
-            -w /var/www \
-            talithaarr/mlops-ps0:v1 \
-            composer install --no-interaction --prefer-dist
-    
-      - name: Install Python Dependencies
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/var/www \
-            -w /var/www \
-            talithaarr/mlops-ps0:v1 \
-            pip install -r requirements.txt
-    
-      - name: Run Docker Container and Execute Tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/var/www \
-            -w /var/www \
-            --user root \
-            -p 5003:5000 \
-            talithaarr/mlops-ps0:v1 \
-            python app.py
-
-      - name: Start Application for Accessibility Check
-        run: |
-          docker run -d --name my-app-container \
-            -v ${{ github.workspace }}:/var/www \
-            -w /var/www \
-            -p 5003:5000 \
-            --user root \
-            talithaarr/mlops-ps0:v1 \
-            python app.py
-
-      - name: Verify Application Accessibility
-        run: |
-          sleep 10 # Give time for the application to start
-          curl -f http://localhost:5003 || exit 1
-
-      - name: Cleanup
-        run: docker rm -f my-app-container
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: streamlit/streamlit-app-action@v0.0.3
+        with:
+          app-path: streamlit_app.py
