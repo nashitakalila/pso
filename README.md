@@ -23,7 +23,7 @@ Kami menggunakan aplikasi sebagai berikut:
 * Monitoring & container : Docker
 
 ## Dataset: 
-* Dataset yang kami gunakan sebagai berikut:<br>
+Dataset yang kami gunakan sebagai berikut:<br>
 https://www.kaggle.com/datasets/fedesoriano/stroke-prediction-dataset</br>
 
 ## Link Website:
