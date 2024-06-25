@@ -16,36 +16,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Langkah untuk setup Docker Buildx, login ke DockerHub, dll
-      # Jika Anda membangun dan push image Docker ke DockerHub
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker Image
+      - name: Build Docker image
         run: |
-          docker build -t my-streamlit-app .
-      
-      - name: Run Docker Container
+          docker build -t streamlit-app .
+
+      - name: Run Streamlit app in Docker
         run: |
-          docker run -d -p 5005:5000 --name streamlit-app my-streamlit-app
+          docker run -d -p 5000:5000 --name streamlit-app streamlit-app
+          echo "Streamlit app is starting..."
 
       - name: Wait for Streamlit to be ready
         run: |
-          echo "Waiting for Streamlit app to be ready..."
-          sleep 10  # Tunggu 10 detik sebelum melakukan curl pertama
-          count=0
-          until curl -s http://localhost:5005 > /dev/null || [ $count -eq 5 ]; do
-            echo "Still waiting for Streamlit app to be ready..."
-            sleep 10
-            ((count++))
+          until curl -s http://localhost:5000 > /dev/null; do
+            echo "Waiting for Streamlit app to be ready..."
+            sleep 5
           done
-          if [ $count -eq 5 ]; then
-            echo "Timeout: Streamlit app took too long to start."
-            exit 1
-          fi
           echo "Streamlit app is up and running!"
 
       - name: Run tests
         run: |
-          curl http://localhost:5005  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
+          curl http://localhost:5000  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
 
       - name: Tear down
         run: |
