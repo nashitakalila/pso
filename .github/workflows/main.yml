@@ -16,27 +16,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
+      # Langkah untuk setup Docker Buildx, login ke DockerHub, dll
+      # Jika Anda membangun dan push image Docker ke DockerHub
 
-      - name: Install dependencies
+      - name: Build Docker Image
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt  # Gantikan dengan nama file requirements Anda
-
-      - name: Run Streamlit app
+          docker build -t my-streamlit-app .
+      
+      - name: Run Docker Container
         run: |
-          streamlit run app.py &> streamlit.log &
-          echo "Streamlit app is starting..."
+          docker run -d -p 5005:5000 --name streamlit-app my-streamlit-app
 
       - name: Wait for Streamlit to be ready
         run: |
           echo "Waiting for Streamlit app to be ready..."
           sleep 10  # Tunggu 10 detik sebelum melakukan curl pertama
           count=0
-          until curl -s http://localhost:5000 > /dev/null || [ $count -eq 5 ]; do
+          until curl -s http://localhost:5005 > /dev/null || [ $count -eq 5 ]; do
             echo "Still waiting for Streamlit app to be ready..."
             sleep 10
             ((count++))
@@ -49,8 +45,9 @@ jobs:
 
       - name: Run tests
         run: |
-          curl http://localhost:5003  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
+          curl http://localhost:5005  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
 
       - name: Tear down
         run: |
-          kill $(pidof streamlit)
+          docker stop streamlit-app
+          docker rm streamlit-app
