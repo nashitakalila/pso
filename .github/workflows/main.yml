@@ -18,12 +18,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8' # Ganti 'x' dengan versi Python yang Anda gunakan
+          python-version: '3.8'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install streamlit
 
+      - name: Login to Docker Hub
+        run: echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u talithaarr --password-stdin
+
       - name: Run Docker container
-        run: docker run -p 5003:5000 my-streamlit-app2
+        run: docker run -p 5003:5000 talithaarr/mlops-pso:v1
