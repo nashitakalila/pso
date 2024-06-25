@@ -4,31 +4,74 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: docker:19.03.12
-        options: --privileged
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Download .env file
+        uses: actions/download-artifact@v2
+        with:
+          name: env-file
+          path: .
+
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-
+    
       - name: Pull Docker Image
-        run: docker pull talithaarr/mlops-ps0:v1
+        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest
+    
+      - name: Ensure Vendor and Storage Directories Exist
+        run: |
+          mkdir -p vendor storage/logs
+          sudo chown -R $USER:$USER vendor storage
+    
+      - name: Install Composer Dependencies
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            --env-file .env \
+            --user root \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            sh -c "composer install --no-interaction --prefer-dist"
+    
+      - name: Install Python Dependencies
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            pip install -r requirements.txt
+    
+      - name: Run Docker Container and Execute Tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            --env-file .env \
+            --user root \
+            -p 5003:5000 \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            python app.py
 
-      - name: Run Docker Container
+      - name: Start Application for Accessibility Check
         run: |
           docker run -d --name my-app-container \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            --env-file .env \
             -p 5003:5000 \
-            talithaarr/mlops-ps0:v1
+            --user root \
+            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            python app.py
 
       - name: Verify Application Accessibility
         run: |
