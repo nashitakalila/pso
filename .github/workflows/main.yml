@@ -23,7 +23,7 @@ jobs:
           pip install streamlit
       - name: Run Streamlit app
         run: |
-          streamlit run app.py
+          streamlit run --server.port 5000 app.py
         continue-on-error: true
         env:
           LC_ALL: C.UTF-8
