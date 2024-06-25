@@ -16,16 +16,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
 
-      - name: Build Docker image
+      - name: Install dependencies
         run: |
-          docker build -t streamlit-app .
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt  # Gantikan dengan nama file requirements Anda
 
-      - name: Run Streamlit app in Docker
+      - name: Run Streamlit app
         run: |
-          docker run -d -p 5000:5000 --name streamlit-app streamlit-app
+          streamlit run app.py &> streamlit.log &
           echo "Streamlit app is starting..."
 
       - name: Wait for Streamlit to be ready
@@ -42,5 +45,4 @@ jobs:
 
       - name: Tear down
         run: |
-          docker stop streamlit-app
-          docker rm streamlit-app
+          kill $(pidof streamlit)
