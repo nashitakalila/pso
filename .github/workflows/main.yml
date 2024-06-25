@@ -21,8 +21,7 @@ test:
       run: |
         docker run -d --name my-app-container \
           -p 5003:5000 \
-          talithaarr/mlops-ps0:v1 \
-          python -m streamlit run app.py
+          talithaarr/mlops-ps0:v1
 
     - name: Verify Application Accessibility
       run: |
