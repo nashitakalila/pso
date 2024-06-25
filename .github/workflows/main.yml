@@ -20,7 +20,7 @@ jobs:
         run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
     
       - name: Pull Docker Image
-        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest
+        run: docker pull talithaarr/mlops-ps0:v1
     
       - name: Ensure Vendor and Storage Directories Exist
         run: |
@@ -32,7 +32,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            talithaarr/mlops-ps0:v1 \
             composer install --no-interaction --prefer-dist
     
       - name: Install Python Dependencies
@@ -40,7 +40,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            talithaarr/mlops-ps0:v1 \
             pip install -r requirements.txt
     
       - name: Run Docker Container and Execute Tests
@@ -50,7 +50,7 @@ jobs:
             -w /var/www \
             --user root \
             -p 5003:5000 \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            talithaarr/mlops-ps0:v1 \
             python app.py
 
       - name: Start Application for Accessibility Check
@@ -60,7 +60,7 @@ jobs:
             -w /var/www \
             -p 5003:5000 \
             --user root \
-            ${{ secrets.DOCKER_HUB_USERNAME }}/my-app:latest \
+            talithaarr/mlops-ps0:v1 \
             python app.py
 
       - name: Verify Application Accessibility
