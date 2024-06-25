@@ -1,66 +1,33 @@
-name: Streamlit CI Pipeline
+test:
+  runs-on: ubuntu-latest
+  needs: build
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  services:
+    docker:
+      image: docker:19.03.12
+      options: --privileged
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+    - name: Pull Docker Image
+      run: docker pull talithaarr/mlops-ps0:v1
 
-      - name: Login to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+    - name: Run Docker Container
+      run: |
+        docker run -d --name my-app-container \
+          -p 5003:5000 \
+          talithaarr/mlops-ps0:v1 \
+          python -m streamlit run app.py
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+    - name: Verify Application Accessibility
+      run: |
+        sleep 10 # Give time for the application to start
+        curl -f http://localhost:5003 || exit 1
 
-      - name: Build Docker image
-        run: |
-          docker build -t talithaarr/mlops-ps0:v1 .
-          docker images
-
-      - name: Push Docker image to Docker Hub
-        run: |
-          docker push talithaarr/mlops-ps0:v1
-
-      - name: Pull and run Streamlit app from Docker Hub
-        run: |
-          docker pull talithaarr/mlops-ps0:v1
-          docker run -d -p 5003:5000 --name streamlit-app talithaarr/mlops-ps0:v1
-          docker ps -a  # Show all containers
-          docker logs streamlit-app  # Display logs from the container
-          echo "Streamlit app is starting..."
-
-      - name: Wait for Streamlit to be ready
-        run: |
-          until curl -s http://localhost:5003 > /dev/null; do
-            echo "Waiting for Streamlit app to be ready..."
-            sleep 5
-          done
-          echo "Streamlit app is up and running!"
-
-      - name: Run tests
-        run: |
-          curl -v http://localhost:5003  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
-
-      - name: Tear down
-        run: |
-          docker stop streamlit-app
-          docker rm streamlit-app
+    - name: Cleanup
+      run: docker rm -f my-app-container
