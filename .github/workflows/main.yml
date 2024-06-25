@@ -19,6 +19,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
       - name: Cache Docker layers
         uses: actions/cache@v3
         with:
@@ -29,16 +33,24 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t streamlit-app .
+          docker build -t talithaarr/mlops-ps0:v1 .
+          docker images
 
-      - name: Run Streamlit app in Docker
+      - name: Push Docker image to Docker Hub
         run: |
-          docker run -d -p 5000:5000 --name streamlit-app streamlit-app
+          docker push talithaarr/mlops-ps0:v1
+
+      - name: Pull and run Streamlit app from Docker Hub
+        run: |
+          docker pull talithaarr/mlops-ps0:v1
+          docker run -d -p 5003:5000 --name streamlit-app talithaarr/mlops-ps0:v1
+          docker ps -a  # Show all containers
+          docker logs streamlit-app  # Display logs from the container
           echo "Streamlit app is starting..."
 
       - name: Wait for Streamlit to be ready
         run: |
-          until curl -s http://localhost:5000 > /dev/null; do
+          until curl -s http://localhost:5003 > /dev/null; do
             echo "Waiting for Streamlit app to be ready..."
             sleep 5
           done
@@ -46,7 +58,7 @@ jobs:
 
       - name: Run tests
         run: |
-          curl http://localhost:5000  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
+          curl -v http://localhost:5003  # Gantikan dengan uji tes yang sesuai untuk aplikasi Streamlit Anda
 
       - name: Tear down
         run: |
